@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { PaperclipIcon, SendIcon, StopIcon, MicrophoneIcon, CameraIcon, MagnifyingGlassIcon, VideoCameraIcon } from './icons/Icons';
+import { PaperclipIcon, SendIcon, StopIcon, MicrophoneIcon, CameraIcon, MagnifyingGlassIcon, PlusIcon } from './icons/Icons';
 import CameraModal from './CameraModal';
 
 // Add SpeechRecognition types to the window object for TypeScript
@@ -60,16 +60,29 @@ interface InputBarProps {
   setIsListening: (isListening: boolean) => void;
   isDeepSearch: boolean;
   setIsDeepSearch: (isDeepSearch: boolean) => void;
-  onOpenVideoCall: () => void;
 }
 
-const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, isListening, setIsListening, isDeepSearch, setIsDeepSearch, onOpenVideoCall }) => {
+const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, isListening, setIsListening, isDeepSearch, setIsDeepSearch }) => {
   const [text, setText] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setIsActionsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -163,6 +176,45 @@ const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, i
           </div>
         )}
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
+           <div className="relative" ref={actionsMenuRef}>
+                 <button 
+                    type="button" 
+                    onClick={() => setIsActionsMenuOpen(prev => !prev)} 
+                    className={`p-2.5 text-gray-400 rounded-full transition-all duration-300 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)] ${isActionsMenuOpen ? 'bg-white/10 rotate-45' : ''}`} 
+                    aria-label="More actions"
+                >
+                    <PlusIcon />
+                </button>
+                {isActionsMenuOpen && (
+                    <div className="absolute bottom-full left-0 mb-3 p-2 flex items-center gap-1 bg-black/70 backdrop-blur-xl border border-white/10 rounded-full shadow-lg">
+                        <button title="Attach File" type="button" onClick={() => { fileInputRef.current?.click(); setIsActionsMenuOpen(false); }} className="p-2.5 text-gray-400 rounded-full transition-all duration-200 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)]" aria-label="Attach file">
+                           <PaperclipIcon />
+                        </button>
+                        <button title="Open Camera" type="button" onClick={() => { setIsCameraOpen(true); setIsActionsMenuOpen(false); }} className="p-2.5 text-gray-400 rounded-full transition-all duration-200 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)]" aria-label="Open camera">
+                           <CameraIcon />
+                        </button>
+                        <button
+                          title={isDeepSearch ? 'Disable Deep Search' : 'Enable Deep Search'}
+                          type="button"
+                          onClick={() => setIsDeepSearch(!isDeepSearch)}
+                          className={`p-2.5 rounded-full transition-all duration-200 hover:shadow-[0_0_15px_rgba(192,132,252,0.4)] ${isDeepSearch ? 'text-violet-400' : 'text-gray-400 hover:text-white'}`}
+                          aria-label={isDeepSearch ? 'Disable Deep Search' : 'Enable Deep Search'}
+                        >
+                           <MagnifyingGlassIcon />
+                        </button>
+                        <button
+                          title={isListening ? 'Stop listening' : 'Start listening'}
+                          type="button"
+                          onClick={handleListen}
+                          disabled={isLoading}
+                          className={`p-2.5 rounded-full transition-all duration-200 disabled:opacity-50 hover:shadow-[0_0_15px_rgba(192,132,252,0.4)] ${isListening ? 'text-red-400 animate-pulse' : 'text-gray-400 hover:text-white'}`}
+                          aria-label={isListening ? 'Stop listening' : 'Start listening'}
+                        >
+                           <MicrophoneIcon />
+                        </button>
+                    </div>
+                )}
+            </div>
           <input
             type="file"
             ref={fileInputRef}
@@ -170,40 +222,6 @@ const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, i
             accept="image/*"
             className="hidden"
           />
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2.5 text-gray-400 rounded-full transition-all duration-200 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)]" aria-label="Attach file">
-            <PaperclipIcon />
-          </button>
-          <button type="button" onClick={() => setIsCameraOpen(true)} className="p-2.5 text-gray-400 rounded-full transition-all duration-200 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)]" aria-label="Open camera">
-            <CameraIcon />
-          </button>
-          <button type="button" onClick={onOpenVideoCall} className="p-2.5 text-gray-400 rounded-full transition-all duration-200 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)]" aria-label="Open video analysis">
-            <VideoCameraIcon />
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsDeepSearch(!isDeepSearch)}
-            className={`p-2.5 rounded-full transition-all duration-200 hover:shadow-[0_0_15px_rgba(192,132,252,0.4)] ${
-              isDeepSearch
-                ? 'text-violet-400'
-                : 'text-gray-400 hover:text-white'
-            }`}
-            aria-label={isDeepSearch ? 'Disable Deep Search' : 'Enable Deep Search'}
-          >
-            <MagnifyingGlassIcon />
-          </button>
-           <button
-            type="button"
-            onClick={handleListen}
-            disabled={isLoading}
-            className={`p-2.5 rounded-full transition-all duration-200 disabled:opacity-50 hover:shadow-[0_0_15px_rgba(192,132,252,0.4)] ${
-              isListening
-                ? 'text-red-400 animate-pulse'
-                : 'text-gray-400 hover:text-white'
-            }`}
-            aria-label={isListening ? 'Stop listening' : 'Start listening'}
-          >
-            <MicrophoneIcon />
-          </button>
           <input
             type="text"
             value={text}

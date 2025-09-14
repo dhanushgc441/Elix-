@@ -151,32 +151,3 @@ export async function generateImage(prompt: string): Promise<string> {
     throw new Error("An unknown error occurred during image generation.");
   }
 }
-
-// Fix: Add and export the 'analyzeVideoFrame' function to resolve the import error.
-export async function analyzeVideoFrame(base64Frame: string): Promise<string> {
-  const client = getAiClient();
-  try {
-    const imagePart = {
-      inlineData: {
-        mimeType: 'image/jpeg',
-        data: base64Frame,
-      },
-    };
-    const textPart = {
-      text: "Analyze this video frame and describe what is happening. Be concise and descriptive.",
-    };
-
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: { parts: [imagePart, textPart] },
-    });
-
-    return response.text;
-  } catch (error) {
-    console.error("Error calling Gemini Vision API:", error);
-    if (error instanceof Error) {
-        throw new Error(`API Error: ${error.message}`);
-    }
-    throw new Error("An unknown error occurred during frame analysis.");
-  }
-}
