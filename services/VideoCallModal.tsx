@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { analyzeVideoFrame } from '../services/geminiService';
+import { analyzeVideoFrame } from './geminiService';
 
 interface VideoCallModalProps {
   isOpen: boolean;

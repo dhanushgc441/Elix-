@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { PaperclipIcon, SendIcon, StopIcon, MicrophoneIcon, CameraIcon, MagnifyingGlassIcon } from './icons/Icons';
+import { PaperclipIcon, SendIcon, StopIcon, MicrophoneIcon, CameraIcon, MagnifyingGlassIcon, VideoCameraIcon } from './icons/Icons';
 import CameraModal from './CameraModal';
 
 // Add SpeechRecognition types to the window object for TypeScript
@@ -32,9 +32,10 @@ interface InputBarProps {
   setIsListening: (isListening: boolean) => void;
   isDeepSearch: boolean;
   setIsDeepSearch: (isDeepSearch: boolean) => void;
+  onOpenVideoCall: () => void;
 }
 
-const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, isListening, setIsListening, isDeepSearch, setIsDeepSearch }) => {
+const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, isListening, setIsListening, isDeepSearch, setIsDeepSearch, onOpenVideoCall }) => {
   const [text, setText] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -148,6 +149,9 @@ const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, i
           </button>
           <button type="button" onClick={() => setIsCameraOpen(true)} className="p-2.5 text-gray-400 rounded-full transition-all duration-200 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)]" aria-label="Open camera">
             <CameraIcon />
+          </button>
+          <button type="button" onClick={onOpenVideoCall} className="p-2.5 text-gray-400 rounded-full transition-all duration-200 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)]" aria-label="Open video analysis">
+            <VideoCameraIcon />
           </button>
           <button
             type="button"

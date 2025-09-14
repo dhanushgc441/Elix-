@@ -8,12 +8,14 @@ import InputBar from './components/InputBar';
 import OfflineNotice from './components/OfflineNotice';
 import HistorySidebar from './components/HistorySidebar';
 import ConfirmationModal from './components/ConfirmationModal';
+import VideoCallModal from './services/VideoCallModal';
 
 const App: React.FC = () => {
   const [allChats, setAllChats] = useState<Conversation[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [chatToDelete, setChatToDelete] = useState<Conversation | null>(null);
+  const [isVideoCallOpen, setIsVideoCallOpen] = useState<boolean>(false);
 
   const [chat, setChat] = useState<Chat | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -424,6 +426,7 @@ const App: React.FC = () => {
           setIsListening={setIsListening}
           isDeepSearch={isDeepSearch}
           setIsDeepSearch={setIsDeepSearch}
+          onOpenVideoCall={() => setIsVideoCallOpen(true)}
         />
       </div>
        <ConfirmationModal
@@ -432,6 +435,10 @@ const App: React.FC = () => {
           onCancel={cancelDelete}
           title="Delete Chat"
           message={`Are you sure you want to permanently delete "${chatToDelete?.title}"? This action cannot be undone.`}
+      />
+      <VideoCallModal
+          isOpen={isVideoCallOpen}
+          onClose={() => setIsVideoCallOpen(false)}
       />
     </div>
   );
