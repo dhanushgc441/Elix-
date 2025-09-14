@@ -138,29 +138,30 @@ export async function generateImage(prompt: string): Promise<string> {
   }
 }
 
+// Fix: Add and export the 'analyzeVideoFrame' function to resolve the import error.
 export async function analyzeVideoFrame(base64Frame: string): Promise<string> {
   try {
     const imagePart = {
       inlineData: {
-        data: base64Frame,
         mimeType: 'image/jpeg',
+        data: base64Frame,
       },
     };
     const textPart = {
-      text: "You are in a real-time video call. Describe what you see in this frame as if you are talking to the person on the other end. Be brief and conversational. Don't mention that you are an AI or that you are analyzing a frame.",
+      text: "Analyze this video frame and describe what is happening. Be concise and descriptive.",
     };
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: { parts: [textPart, imagePart] },
+      model: 'gemini-2.5-flash',
+      contents: { parts: [imagePart, textPart] },
     });
 
     return response.text;
   } catch (error) {
-    console.error("Error analyzing video frame:", error);
+    console.error("Error calling Gemini Vision API:", error);
     if (error instanceof Error) {
-        return `Error: ${error.message}`;
+        throw new Error(`API Error: ${error.message}`);
     }
-    return "An error occurred during frame analysis.";
+    throw new Error("An unknown error occurred during frame analysis.");
   }
 }

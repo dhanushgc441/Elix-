@@ -20,30 +20,45 @@ const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCapture })
   }, [stream]);
 
   const startCamera = useCallback(async () => {
-    stopCamera(); // Stop any existing stream
+    stopCamera();
     setError(null);
+
+    const tryStream = async (constraints: MediaStreamConstraints) => {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+    };
+
+    let mediaStream: MediaStream | null = null;
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }, // Prefer rear camera
-        audio: false,
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
+        // First, try for the environment (rear) camera
+        mediaStream = await tryStream({ video: { facingMode: 'environment' }, audio: false });
     } catch (err) {
-      console.error("Error accessing camera:", err);
-      if (err instanceof Error) {
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          setError('Camera permission was denied. Please allow camera access in your browser settings.');
-        } else {
-          setError(`Could not access the camera: ${err.message}`);
+        console.warn("Could not get rear camera, trying any available camera.", err);
+        try {
+            // If that fails, fall back to any available camera
+            mediaStream = await tryStream({ video: true, audio: false });
+        } catch (finalErr) {
+            console.error("Error accessing any camera:", finalErr);
+            if (finalErr instanceof Error) {
+                if (finalErr.name === 'NotAllowedError' || finalErr.name === 'PermissionDeniedError') {
+                    setError('Camera permission was denied. Please allow camera access in your browser settings.');
+                } else {
+                    setError(`Could not access the camera: ${finalErr.message}`);
+                }
+            } else {
+                setError('An unknown error occurred while accessing the camera.');
+            }
+            return; // Exit if no camera is found
         }
-      } else {
-          setError('An unknown error occurred while accessing the camera.');
-      }
+    }
+
+    if (mediaStream) {
+        setStream(mediaStream);
+        if (videoRef.current) {
+            videoRef.current.srcObject = mediaStream;
+        }
     }
   }, [stopCamera]);
+
 
   useEffect(() => {
     if (isOpen) {

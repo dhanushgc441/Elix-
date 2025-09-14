@@ -9,7 +9,8 @@ interface VideoCallModalProps {
 const VideoCallModal: React.FC<VideoCallModalProps> = ({ isOpen, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const analysisIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Fix: Use ReturnType<typeof setInterval> for the interval ID type, which is compatible with browser environments.
+  const analysisIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,17 +28,43 @@ const VideoCallModal: React.FC<VideoCallModalProps> = ({ isOpen, onClose }) => {
   const startCamera = useCallback(async () => {
     stopCamera();
     setError(null);
+
+    const tryStream = async (constraints: MediaStreamConstraints) => {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+    };
+
+    let mediaStream: MediaStream | null = null;
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
+        // First, try for the user-facing (front) camera
+        mediaStream = await tryStream({ video: { facingMode: 'user' }, audio: false });
     } catch (err) {
-      console.error("Error accessing camera:", err);
-      setError('Could not access camera. Please check permissions.');
+        console.warn("Could not get front camera, trying any available camera.", err);
+        try {
+            // If that fails, fall back to any available camera
+            mediaStream = await tryStream({ video: true, audio: false });
+        } catch (finalErr) {
+            console.error("Error accessing any camera:", finalErr);
+            if (finalErr instanceof Error) {
+                if (finalErr.name === 'NotAllowedError' || finalErr.name === 'PermissionDeniedError') {
+                    setError('Camera permission was denied. Please allow camera access in your browser settings.');
+                } else {
+                    setError(`Could not access the camera: ${finalErr.message}`);
+                }
+            } else {
+                setError('An unknown error occurred while accessing the camera.');
+            }
+            return; // Exit if no camera is found
+        }
+    }
+
+    if (mediaStream) {
+        setStream(mediaStream);
+        if (videoRef.current) {
+            videoRef.current.srcObject = mediaStream;
+        }
     }
   }, [stopCamera]);
+
 
   const stopAnalysis = useCallback(() => {
     if (analysisIntervalRef.current) {

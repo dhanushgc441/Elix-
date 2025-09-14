@@ -21,6 +21,7 @@ const App: React.FC = () => {
   const [lastFailedMessage, setLastFailedMessage] = useState<{ text: string; image?: File } | null>(null);
   const [isListening, setIsListening] = useState<boolean>(false);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [isDeepSearch, setIsDeepSearch] = useState<boolean>(false);
   
   const [speechVoice, setSpeechVoice] = useState<'female' | 'male'>('female');
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -126,6 +127,13 @@ const App: React.FC = () => {
   const handleSendMessage = useCallback(async (text: string, image?: File, isRetry = false) => {
     if (isLoading || !currentChatId) return;
 
+    let finalText = text;
+    if (isDeepSearch) {
+      // Modify the prompt for a deep search
+      finalText = `Perform a comprehensive "deep search" on the web to answer the following. Provide a detailed, well-structured response and cite multiple high-quality sources. Query: "${text}"`;
+      setIsDeepSearch(false); // Reset after using it for one message
+    }
+    
     const currentConv = allChats.find(c => c.id === currentChatId);
 
     const updateUserMessage = (message: Message) => {
@@ -225,7 +233,7 @@ const App: React.FC = () => {
         if (!isRetry) setLastFailedMessage({ text, image });
 
         try {
-          const stream = await sendMessageStream(chat, text, image);
+          const stream = await sendMessageStream(chat, finalText, image);
           let allSources: GroundingChunk[] = [];
           let finalResponseText = '';
     
@@ -258,7 +266,7 @@ const App: React.FC = () => {
           abortControllerRef.current = null;
         }
     }
-  }, [chat, isLoading, isOnline, currentChatId, allChats]);
+  }, [chat, isLoading, isOnline, currentChatId, allChats, isDeepSearch]);
 
   const handleRetry = () => {
     if (lastFailedMessage && currentChatId) {
@@ -380,6 +388,8 @@ const App: React.FC = () => {
           onStop={handleStop}
           isListening={isListening}
           setIsListening={setIsListening}
+          isDeepSearch={isDeepSearch}
+          setIsDeepSearch={setIsDeepSearch}
         />
       </div>
        <ConfirmationModal
