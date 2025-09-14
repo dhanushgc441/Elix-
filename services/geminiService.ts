@@ -7,7 +7,10 @@ function getAiClient(): GoogleGenAI {
     return ai;
   }
   
-  const API_KEY = process.env.API_KEY;
+  // Defensively check for process and process.env, as this code runs in a browser environment
+  // where 'process' may not be defined.
+  const API_KEY = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+
   if (!API_KEY) {
     throw new Error("Configuration error: API_KEY is not set. Please configure environment variables for deployment.");
   }
