@@ -1,0 +1,8 @@
+{
+  "name": "Elix AI Assistant",
+  "description": "A premium, modern AI assistant named Elix, featuring a sleek chat interface with support for image uploads and live web search, designed with a minimalist aesthetic and subtle rainbow-inspired gradients.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
