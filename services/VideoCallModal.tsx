@@ -9,8 +9,7 @@ interface VideoCallModalProps {
 const VideoCallModal: React.FC<VideoCallModalProps> = ({ isOpen, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Fix: Use ReturnType<typeof setInterval> for the interval ID type, which is compatible with browser environments.
-  const analysisIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const analysisIntervalRef = useRef<number | null>(null);
   
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +79,7 @@ const VideoCallModal: React.FC<VideoCallModalProps> = ({ isOpen, onClose }) => {
     setIsAnalyzing(true);
     setAiResponse('');
 
-    analysisIntervalRef.current = setInterval(async () => {
+    analysisIntervalRef.current = window.setInterval(async () => {
         if (!videoRef.current || !canvasRef.current || isLoadingFrame) return;
 
         const video = videoRef.current;

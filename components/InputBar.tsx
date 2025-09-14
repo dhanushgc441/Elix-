@@ -4,7 +4,35 @@ import CameraModal from './CameraModal';
 
 // Add SpeechRecognition types to the window object for TypeScript
 declare global {
-  // Fix: Define the SpeechRecognition interface to resolve the "Cannot find name 'SpeechRecognition'" error.
+  // Detailed types for the Web Speech API to provide strong typing
+  interface SpeechRecognitionErrorEvent extends Event {
+    readonly error: string;
+    readonly message: string;
+  }
+
+  interface SpeechRecognitionEvent extends Event {
+    readonly resultIndex: number;
+    readonly results: SpeechRecognitionResultList;
+  }
+
+  interface SpeechRecognitionResultList {
+    readonly length: number;
+    item(index: number): SpeechRecognitionResult;
+    [index: number]: SpeechRecognitionResult;
+  }
+
+  interface SpeechRecognitionResult {
+    readonly isFinal: boolean;
+    readonly length: number;
+    item(index: number): SpeechRecognitionAlternative;
+    [index: number]: SpeechRecognitionAlternative;
+  }
+
+  interface SpeechRecognitionAlternative {
+    readonly transcript: string;
+    readonly confidence: number;
+  }
+  
   interface SpeechRecognition {
     continuous: boolean;
     interimResults: boolean;
@@ -14,13 +42,13 @@ declare global {
     abort: () => void;
     onstart: () => void;
     onend: () => void;
-    onerror: (event: any) => void;
-    onresult: (event: any) => void;
+    onerror: (event: SpeechRecognitionErrorEvent) => void;
+    onresult: (event: SpeechRecognitionEvent) => void;
   }
 
   interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
+    SpeechRecognition: { new(): SpeechRecognition };
+    webkitSpeechRecognition: { new(): SpeechRecognition };
   }
 }
 
@@ -50,7 +78,6 @@ const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, i
       return;
     }
     
-    // Fix: Add type annotation for the `recognition` constant.
     const recognition: SpeechRecognition = new SpeechRecognitionAPI();
     recognition.continuous = false;
     recognition.interimResults = false;
@@ -58,11 +85,11 @@ const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, i
 
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error:', event.error);
       setIsListening(false);
     };
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
       setText((currentText) => (currentText ? `${currentText} ${transcript}` : transcript));
     };
@@ -139,7 +166,6 @@ const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, i
           <input
             type="file"
             ref={fileInputRef}
-            // Fix: Corrected typo from handleFileFileChange to handleFileChange.
             onChange={handleFileChange}
             accept="image/*"
             className="hidden"
