@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [currentlySpeakingId, setCurrentlySpeakingId] = useState<string | null>(null);
   const [customPersonality, setCustomPersonality] = useState<string>(ELIX_PERSONALITY);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
   
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -94,7 +95,19 @@ const App: React.FC = () => {
 
   // Re-initialize chat session when personality changes
   useEffect(() => {
-    setChat(initChat(customPersonality));
+    try {
+      // Reset error on re-try
+      setInitializationError(null);
+      setChat(initChat(customPersonality));
+    } catch (error) {
+      console.error("Initialization failed:", error);
+      if (error instanceof Error) {
+        setInitializationError(error.message);
+      } else {
+        setInitializationError("An unknown error occurred during app initialization.");
+      }
+      setChat(null); // Ensure chat is null on error
+    }
   }, [customPersonality]);
 
   useEffect(() => {
@@ -349,6 +362,27 @@ const App: React.FC = () => {
     setCurrentChatId(nextChatId);
     setChatToDelete(null);
   }, [chatToDelete, currentChatId, allChats]);
+
+  if (initializationError) {
+    return (
+      <div className="flex flex-col h-screen bg-black font-sans items-center justify-center text-center p-4">
+        <div className="max-w-md">
+          <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-orange-500">
+            Application Error
+          </h1>
+          <p className="text-gray-300 mb-2">
+            Elix could not start. This is usually due to a configuration issue.
+          </p>
+          <p className="text-sm text-gray-500 bg-gray-900 p-3 rounded-lg border border-white/10">
+            <code>{initializationError}</code>
+          </p>
+           <p className="text-gray-400 mt-6 text-xs">
+            If you are the developer, please ensure the API key is correctly configured in your deployment environment.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-black font-sans overflow-hidden relative">

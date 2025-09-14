@@ -1,12 +1,21 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-const API_KEY = process.env.API_KEY;
+let ai: GoogleGenAI;
 
-if (!API_KEY) {
-  throw new Error("API_KEY environment variable not set");
+function getAiClient(): GoogleGenAI {
+  if (ai) {
+    return ai;
+  }
+  
+  const API_KEY = process.env.API_KEY;
+  if (!API_KEY) {
+    throw new Error("Configuration error: API_KEY is not set. Please configure environment variables for deployment.");
+  }
+  
+  ai = new GoogleGenAI({ apiKey: API_KEY });
+  return ai;
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export const ELIX_PERSONALITY = `You are Elix, a helpful and friendly AI assistant developed by ElixAi. You are NOT a Google product or associated with Google in any way. Your creator is ElixAi. The founder and owner of ElixAi is Dhanush GC.
 Your responses should be professional, clean, and warm. Engage in natural, human-like conversation. Avoid being overly robotic.
@@ -76,7 +85,8 @@ When asked a study-related question, you MUST act like a teacher explaining the 
 `;
 
 export function initChat(personality?: string): Chat {
-  return ai.chats.create({
+  const client = getAiClient();
+  return client.chats.create({
     model: 'gemini-2.5-flash',
     config: {
       systemInstruction: personality || ELIX_PERSONALITY,
@@ -114,8 +124,9 @@ export async function sendMessageStream(
 }
 
 export async function generateImage(prompt: string): Promise<string> {
+  const client = getAiClient();
   try {
-    const response = await ai.models.generateImages({
+    const response = await client.models.generateImages({
       model: 'imagen-4.0-generate-001',
       prompt: prompt,
       config: {
@@ -140,6 +151,7 @@ export async function generateImage(prompt: string): Promise<string> {
 
 // Fix: Add and export the 'analyzeVideoFrame' function to resolve the import error.
 export async function analyzeVideoFrame(base64Frame: string): Promise<string> {
+  const client = getAiClient();
   try {
     const imagePart = {
       inlineData: {
@@ -151,7 +163,7 @@ export async function analyzeVideoFrame(base64Frame: string): Promise<string> {
       text: "Analyze this video frame and describe what is happening. Be concise and descriptive.",
     };
 
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: { parts: [imagePart, textPart] },
     });
