@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { PaperclipIcon, SendIcon, StopIcon, MicrophoneIcon, CameraIcon } from './icons/Icons';
+import { PaperclipIcon, SendIcon, StopIcon, MicrophoneIcon, CameraIcon, VideoCameraIcon } from './icons/Icons';
 import CameraModal from './CameraModal';
+import VideoCallModal from './VideoCallModal';
 
 // Add SpeechRecognition types to the window object for TypeScript
 declare global {
@@ -37,6 +38,7 @@ const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, i
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isVideoCallOpen, setIsVideoCallOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
@@ -147,6 +149,9 @@ const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, i
           <button type="button" onClick={() => setIsCameraOpen(true)} className="p-2.5 text-gray-400 rounded-full transition-all duration-200 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)]" aria-label="Open camera">
             <CameraIcon />
           </button>
+          <button type="button" onClick={() => setIsVideoCallOpen(true)} className="p-2.5 text-gray-400 rounded-full transition-all duration-200 hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.4)]" aria-label="Start video call">
+            <VideoCameraIcon />
+          </button>
            <button
             type="button"
             onClick={handleListen}
@@ -191,6 +196,10 @@ const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading, onStop, i
           setImageFile(file);
           setIsCameraOpen(false);
         }}
+      />
+      <VideoCallModal
+        isOpen={isVideoCallOpen}
+        onClose={() => setIsVideoCallOpen(false)}
       />
     </div>
   );
